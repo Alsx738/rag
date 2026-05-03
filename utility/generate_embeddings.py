@@ -14,7 +14,7 @@ def main():
     parser.add_argument('--limit', type=int, default=None, help="Limit the number of reviews to process in this run")
     args = parser.parse_args()
 
-    # 1. Configurazione API da modulo separato
+    # 1. API Configuration from separate module
     from utility.llm import client, EMBEDDING_MODEL
     
     # 2. Database Connection using the centralized module
@@ -56,11 +56,11 @@ def main():
         # Start the progress bar
         with tqdm(total=target_rows, desc="Generating Embeddings", unit="rows") as pbar:
             while True:
-                # Controlla se abbiamo raggiunto il limite richiesto
+                # Check if we have reached the requested limit
                 if processed_count >= target_rows:
                     break
                     
-                # Calcola quanto prendere in questo batch (fino a 1000, ma non superare il limite)
+                # Calculate how much to take in this batch (up to 1000, but do not exceed limit)
                 current_limit = min(batch_size, target_rows - processed_count)
                 
                 # Fetch a batch of rows where embedding is NULL

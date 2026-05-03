@@ -1,11 +1,11 @@
 """
-generate_gold_truth.py — Genera il dataset di valutazione sintetico.
+generate_gold_truth.py — Generates the synthetic evaluation dataset.
 
-Campiona 30 ProductId diversi dal DB, recupera le recensioni più utili
-per ciascuno e usa GPT per generare 4 query naturali in inglese.
-Salva il risultato in evaluation/gold_truth.json.
+Samples different ProductIds from the DB, retrieves the most helpful reviews
+for each, and uses GPT to generate natural language queries in English.
+Saves the result in evaluation/gold_truth.json.
 
-Uso (da root del progetto):
+Usage (from project root):
     uv run python -m evaluation.generate_gold_truth
 """
 
@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 from sqlalchemy import text
 from tqdm import tqdm
 
-# Gestisce sia l'esecuzione come modulo che come script diretto
+# Handles both execution as a module and as a direct script
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
@@ -26,18 +26,18 @@ from utility.llm import client, CHAT_MODEL
 
 load_dotenv()
 
-# ── Configurazione ────────────────────────────────────────────────────────────
+# ── Configuration ─────────────────────────────────────────────────────────────
 OUTPUT_FILE          = Path(__file__).parent / "gold_truth.json"
 NUM_PRODUCTS         = 200
-REVIEWS_PER_PRODUCT  = 3   # recensioni più utili da passare al LLM come contesto
-QUERIES_PER_PRODUCT  = 4   # query sintetiche da generare per prodotto
-MIN_REVIEWS          = 3   # soglia minima: ignora prodotti con poche recensioni
+REVIEWS_PER_PRODUCT  = 3   # most helpful reviews to pass to LLM as context
+QUERIES_PER_PRODUCT  = 4   # synthetic queries to generate per product
+MIN_REVIEWS          = 3   # minimum threshold: ignore products with few reviews
 
 
 # ── DB helpers ────────────────────────────────────────────────────────────────
 
 def sample_product_ids(conn, n: int, min_reviews: int) -> list[str]:
-    """Campiona n ProductId distinti con almeno min_reviews recensioni."""
+    """Samples n distinct ProductIds with at least min_reviews reviews."""
     result = conn.execute(text("""
         SELECT "ProductId"
         FROM amazon_reviews
@@ -50,7 +50,7 @@ def sample_product_ids(conn, n: int, min_reviews: int) -> list[str]:
 
 
 def fetch_reviews(conn, product_id: str, limit: int) -> list[dict]:
-    """Recupera le recensioni più votate per un prodotto."""
+    """Retrieves the highest voted reviews for a product."""
     result = conn.execute(text("""
         SELECT "Summary", "reviewText", "Score"
         FROM amazon_reviews
@@ -67,7 +67,7 @@ def fetch_reviews(conn, product_id: str, limit: int) -> list[dict]:
 # ── LLM query generation ──────────────────────────────────────────────────────
 
 def generate_queries(reviews: list[dict], n_queries: int) -> list[str]:
-    """Chiede a GPT di generare n query naturali in inglese per il prodotto."""
+    """Asks GPT to generate n natural English queries for the product."""
     reviews_block = "\n\n".join([
         f"[Review {i+1}]\nTitle: {r['summary']}\nText: {r['text'][:500]}"
         for i, r in enumerate(reviews)
@@ -104,7 +104,7 @@ Reviews:
             },
             {"role": "user", "content": prompt},
         ],
-        temperature=0.8,  # leggermente alta per diversificare le query
+        temperature=0.8,  # slightly high to diversify queries
     )
 
     data = json.loads(response.choices[0].message.content)
@@ -119,9 +119,9 @@ def main():
     print("=" * 55)
 
     with engine.connect() as conn:
-        print(f"\nCampionamento di {NUM_PRODUCTS} ProductId diversi...")
+        print(f"\nSampling {NUM_PRODUCTS} different ProductIds...")
         product_ids = sample_product_ids(conn, NUM_PRODUCTS, MIN_REVIEWS)
-        print(f"  ✓ {len(product_ids)} prodotti trovati\n")
+        print(f"  ✓ {len(product_ids)} products found\n")
 
         gold_truth = []
 
@@ -147,8 +147,8 @@ def main():
         json.dump(gold_truth, f, indent=2, ensure_ascii=False)
 
     total_queries = sum(len(e["queries"]) for e in gold_truth)
-    print(f"\n✅  Gold truth salvato in: {OUTPUT_FILE}")
-    print(f"    {len(gold_truth)} prodotti × {QUERIES_PER_PRODUCT} query = {total_queries} test case totali\n")
+    print(f"\n✅  Gold truth saved in: {OUTPUT_FILE}")
+    print(f"    {len(gold_truth)} products × {QUERIES_PER_PRODUCT} queries = {total_queries} total test cases\n")
 
 
 if __name__ == "__main__":
