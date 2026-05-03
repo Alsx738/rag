@@ -102,3 +102,4 @@ uv run python -m evaluation.evaluate
 Since this is an experimental project, there are several areas for potential expansion:
 
 - **Product-Level Summaries**: Use an LLM to aggregate and summarize individual reviews into a clean, structured product catalog.
+- **Order Management & Support Agent**: Generate synthetic e-commerce order data (tracking numbers, shipping statuses, return windows) and introduce a dedicated support agent capable of securely handling post-purchase inquiries alongside recommendations.
