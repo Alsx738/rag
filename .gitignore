@@ -1,0 +1,19 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets
+.env
+
+# Large datasets
+utility/*.csv
+utility/*.zip
+utility/amazon-product-reviews-extract/
+.json
